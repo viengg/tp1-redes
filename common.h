@@ -3,6 +3,9 @@
 #include <stdlib.h>
 
 #include <arpa/inet.h>
+#define CONFIRMATION_TYPE 1
+#define GUESS_TYPE 2
+#define RESPONSE_TYPE 3
 #define GAMEOVER_TYPE 4
 #define BUFSZ 1024
 #define MAX_CONNECTIONS 10

@@ -15,14 +15,14 @@ void init_guess(char *dst){
 	char c;
 	printf("guess a letter> ");
 	scanf(" %c", &c);
-	dst[0] = 2;
+	dst[0] = GUESS_TYPE;
 	dst[1] = c;
 }
 
 void print_positions(char *positions, uint8_t positions_size){
 	char buf[BUFSZ];
 	
-	printf("Positions: ");
+	printf("positions: ");
 	for(uint8_t i = 0; i < positions_size; i++){
 		sprintf(buf, "%d", positions[i] + 1);
 		printf("%s ", buf);

@@ -30,7 +30,7 @@ int set_palavra(char *dst){
 int send_confirmation(int csock, uint8_t word_size){
     uint8_t confirmation[2];
     memset(confirmation, 0, 2);
-    confirmation[0] = 1;
+    confirmation[0] = CONFIRMATION_TYPE;
     confirmation[1] = word_size;
     size_t count = send(csock, confirmation, 2, 0);
     if(count != 2){
@@ -39,51 +39,40 @@ int send_confirmation(int csock, uint8_t word_size){
     return 0;
 }
 
-int you_won(int csock){
+int terminate(int csock){
     char flag[1];
     flag[0] = GAMEOVER_TYPE;
     if(1 != send(csock, flag, 1, 0)){
         return -1;
     }
-    printf("[rsp] response size: %ld\n", sizeof(flag));
+    printf("[rsp] response size: %ld bytes\n", sizeof(flag));
     return 0;
 }
 
-int respond(int csock, char guessed_letter, char *word, uint8_t *total_guessed){
+uint8_t get_occurrences(char guessed_letter, char *word){
     uint8_t num_occurrences = 0;
     uint8_t word_size = strlen(word);
 
     for(uint8_t i = 0; i < word_size; i++){
         if(word[i] == guessed_letter){
             num_occurrences++;
-            (*total_guessed)++;
-            //manda msg do tipo 4 se o jogo acabou
-            if((*total_guessed) == word_size){
-                return you_won(csock);
-            }
         }
     }
 
-    // 2 bytes para o cabecalho e 1 byte para cada posicao achada
-    uint8_t response_size = 2+num_occurrences;
-    uint8_t response[response_size]; 
-    memset(response, 0 , response_size);
+    return num_occurrences;
+}
 
-    response[0] =  3;
+void init_response(uint8_t *response, uint8_t num_occurrences, char *word, char guessed_letter){
+    uint8_t word_size = strlen(word);
+
+    response[0] =  RESPONSE_TYPE;
     response[1] = num_occurrences;
-    for(uint8_t i = 0, j = 0; i < strlen(word); i++){
+    for(uint8_t i = 0, j = 0; i < word_size; i++){
         if(word[i] == guessed_letter){
             response[2+j] = i;
             j++;
         }
     }
-    printf("[rsp] response size: %d bytes\n", response_size);
-
-    if(response_size != send(csock, response, response_size, 0)){
-        return -1;
-    }
-    return 0;
-
 }
 
 void usage(int argc, char **argv) {
@@ -156,7 +145,7 @@ int main(int argc, char **argv) {
         logexit("server confirmation error");
     }
     uint8_t letters_guessed = 0;
-    do {
+    while(1) {
         char guess[2];
         memset(guess, 0, 2);
         if (!recv(csock, guess, 2, 0)) {
@@ -166,14 +155,29 @@ int main(int argc, char **argv) {
         char guessed_letter = guess[1];
         printf("[msg] recieved: %c\n", guessed_letter);
 
-        if (0 != respond(csock, guessed_letter, word, &letters_guessed)) {
-            logexit("server response error");
+        uint8_t num_occurrences = get_occurrences(guessed_letter, word);
+        letters_guessed += num_occurrences;
+
+        //win condition
+        if(letters_guessed == word_size){
+            terminate(csock);
+            break;
         }
 
-    } while (letters_guessed != word_size);
+        // 2 bytes para o cabecalho e 1 byte para cada posicao achada
+        uint8_t response_size = 2+num_occurrences;
+        uint8_t response[response_size]; 
+        init_response(response, num_occurrences, word, guessed_letter);
+        printf("[rsp] response size: %ld bytes\n", sizeof(response));
+
+        size_t count = send(csock, response, sizeof(response), 0);
+        if(response_size != count){
+            logexit("server response error");
+        }
+    }
 
     close(csock);
     close(s);
-    printf("server closed\n");
+    printf("server closed!\n");
     exit(EXIT_SUCCESS);
 }
