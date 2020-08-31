@@ -82,23 +82,27 @@ void usage(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-    if (argc < 2) {
+    if (argc != 2) {
         usage(argc, argv);
     }
 
+    char word[BUFSZ] = "protocolo";
+    /*descomente para ler a palavra pelo teclado
     char word[BUFSZ];
     if(0 != set_palavra(word)){
         logexit("error reading word");
-    }
+    }*/
     uint8_t word_size = (uint8_t)strlen(word);
-    printf("size of word:%d bytes\n", word_size);
+    printf("size of word: %d bytes\n", word_size);
 
+    int proto = 6;
+    /*descomente para ler o protocolo pelo teclado
     int proto;
     if(0 != set_protocol(&proto)){
         printf("please choose a valid protocol\n");
         exit(EXIT_FAILURE);
     }
-
+    */
     struct sockaddr_storage storage;
     if (0 != server_sockaddr_init(proto, argv[1], &storage)) {
         usage(argc, argv);

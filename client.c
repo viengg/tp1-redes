@@ -19,13 +19,37 @@ void init_guess(char *dst){
 	dst[1] = c;
 }
 
-void print_positions(char *positions, uint8_t positions_size){
-	char buf[BUFSZ];
-	
-	printf("positions: ");
+void init_word(char *word, int word_size){
+	for(int i = 0; i < word_size; i++){
+		word[i] = '_';
+	}
+	word[word_size-1] = '\0';
+}
+
+void print_positions(char *positions, uint8_t positions_size, char *word, char guessed_word){
 	for(uint8_t i = 0; i < positions_size; i++){
-		sprintf(buf, "%d", positions[i] + 1);
-		printf("%s ", buf);
+		for(uint8_t j = 0; j < strlen(word); j++){
+			if(positions[i] == j){
+				word[j] = guessed_word;
+			}
+		}
+	}
+
+	for(uint8_t i = 0; i < strlen(word); i++){
+		printf("%c ", word[i]);
+	}
+	printf("\n");
+}
+
+void print_complete_word(char *word, char guessed_word){
+	printf("correct word: ");
+	for(uint8_t i = 0; i < strlen(word); i++){
+		if(word[i] == '_'){
+			printf("%c", guessed_word);
+		}
+		else{
+			printf("%c", word[i]);
+		}
 	}
 	printf("\n");
 }
@@ -37,7 +61,7 @@ void usage(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-	if (argc < 3) {
+	if (argc != 3) {
 		usage(argc, argv);
 	}
 
@@ -67,12 +91,22 @@ int main(int argc, char **argv) {
 	if(!recv(s, confirmation, 2, 0)){
 		logexit("client confirmation error");
 	}
-	printf("size of word to be guessed: %d\n", confirmation[1]);
+	uint8_t word_size = confirmation[1];
+	printf("size of word to be guessed: %d\n", word_size);
+
+	for(uint8_t i = 0; i < word_size; i++){
+		printf("_ ");
+	}
+	printf("\n");
+
+	char word[word_size+1];
+	init_word(word, word_size+1);
 
 	char guess[2];
 	char buf[BUFSZ];
 	while(1){
 		init_guess(guess);
+		char guessed_letter = guess[1];
 		size_t count = send(s, guess, 2, 0);
 		if(count != 2){
 			logexit("send");
@@ -82,16 +116,20 @@ int main(int argc, char **argv) {
 		recv(s, buf, BUFSZ, 0);
 
 		uint8_t type = buf[0];
+		uint8_t num_occurrences = buf[1];
+
 		if(type == GAMEOVER_TYPE){
 			//acabou o jogo
+			//descomente para imprimir a palavra completa
+			//print_complete_word(word, guessed_letter);
 			break;
 		}
-		uint8_t num_occurrences = buf[1];
-        printf("[rsp] type: %d num_occurrences: %d\n", type, num_occurrences);
-		//so imprime as posicoes se acertar
-		if(num_occurrences > 0) {
-			print_positions(buf+2, num_occurrences);
-		}	
+
+        printf("[rsp] num_occurrences: %d\n", num_occurrences);
+		if(num_occurrences == 0){
+			printf("try again!\n");
+		}
+		print_positions(buf+2, num_occurrences, word, guessed_letter);
 	}
 
 	printf("you won!\n");
