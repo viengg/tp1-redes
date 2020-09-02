@@ -132,51 +132,53 @@ int main(int argc, char **argv) {
     struct sockaddr *caddr = (struct sockaddr *)(&cstorage);
     socklen_t caddrlen = sizeof(cstorage);
 
-    int csock = accept(s, caddr, &caddrlen);
-    if (csock == -1) {
-        logexit("accept");
-    }
-
-    char caddrstr[BUFSZ];
-    addrtostr(caddr, caddrstr, BUFSZ);
-    printf("[log] connection from %s\n", caddrstr);
-
-    if (0 != send_confirmation(csock, word_size)) {
-        logexit("server confirmation error");
-    }
-    uint8_t letters_guessed = 0;
-    while(1) {
-        char guess[2];
-        memset(guess, 0, 2);
-        if (!recv(csock, guess, 2, 0)) {
-            //connection terminated
-            break;
-        }
-        char guessed_letter = guess[1];
-        printf("[msg] recieved: %c\n", guessed_letter);
-
-        uint8_t num_occurrences = get_occurrences(guessed_letter, word);
-        letters_guessed += num_occurrences;
-
-        //win condition
-        if(letters_guessed == word_size){
-            terminate(csock);
-            break;
+    while (1) {
+        int csock = accept(s, caddr, &caddrlen);
+        if (csock == -1) {
+            logexit("accept");
         }
 
-        // 2 bytes para o cabecalho e 1 byte para cada posicao achada
-        uint8_t response_size = 2+num_occurrences;
-        uint8_t response[response_size]; 
-        init_response(response, num_occurrences, word, guessed_letter);
-        printf("[rsp] response size: %ld bytes\n", sizeof(response));
+        char caddrstr[BUFSZ];
+        addrtostr(caddr, caddrstr, BUFSZ);
+        printf("[log] connection from %s\n", caddrstr);
 
-        size_t count = send(csock, response, sizeof(response), 0);
-        if(response_size != count){
-            logexit("server response error");
+        if (0 != send_confirmation(csock, word_size)) {
+            logexit("server confirmation error");
         }
-    }
+        uint8_t letters_guessed = 0;
+        while (1) {
+            char guess[2];
+            memset(guess, 0, 2);
+            if (!recv(csock, guess, 2, 0)) {
+                // connection terminated
+                break;
+            }
+            char guessed_letter = guess[1];
+            printf("[msg] recieved: %c\n", guessed_letter);
 
-    close(csock);
+            uint8_t num_occurrences = get_occurrences(guessed_letter, word);
+            letters_guessed += num_occurrences;
+
+            // win condition
+            if (letters_guessed == word_size) {
+                terminate(csock);
+                break;
+            }
+
+            // 2 bytes para o cabecalho e 1 byte para cada posicao achada
+            uint8_t response_size = 2 + num_occurrences;
+            uint8_t response[response_size];
+            init_response(response, num_occurrences, word, guessed_letter);
+            printf("[rsp] response size: %ld bytes\n", sizeof(response));
+
+            size_t count = send(csock, response, sizeof(response), 0);
+            if (response_size != count) {
+                logexit("server response error");
+            }
+        }
+
+        close(csock);
+    }
     close(s);
     printf("server closed!\n");
     exit(EXIT_SUCCESS);
