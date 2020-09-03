@@ -37,7 +37,7 @@ void usage(int argc, char **argv) {
 }
 
 int main(int argc, char **argv) {
-	if (argc < 3) {
+	if (argc != 3) {
 		usage(argc, argv);
 	}
 
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
 			break;
 		}
 		uint8_t num_occurrences = buf[1];
-        printf("[rsp] type: %d num_occurrences: %d\n", type, num_occurrences);
+        printf("[rsp] num_occurrences: %d\n", num_occurrences);
 		//so imprime as posicoes se acertar
 		if(num_occurrences > 0) {
 			print_positions(buf+2, num_occurrences);
