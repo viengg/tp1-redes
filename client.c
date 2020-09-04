@@ -11,15 +11,15 @@
 #include <arpa/inet.h>
 
 
-void init_guess(char *dst){
-	char c;
+void init_guess(uint8_t *dst){
+	uint8_t c;
 	printf("guess a letter> ");
 	scanf(" %c", &c);
 	dst[0] = GUESS_TYPE;
 	dst[1] = c;
 }
 
-void print_positions(char *positions, uint8_t positions_size){
+void print_positions(uint8_t *positions, uint8_t positions_size){
 	char buf[BUFSZ];
 	
 	printf("positions: ");
@@ -69,8 +69,8 @@ int main(int argc, char **argv) {
 	}
 	printf("size of word to be guessed: %d\n", confirmation[1]);
 
-	char guess[2];
-	char buf[BUFSZ];
+	uint8_t guess[2];
+	uint8_t buf[BUFSZ];
 	while(1){
 		init_guess(guess);
 		size_t count = send(s, guess, 2, 0);

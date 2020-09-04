@@ -41,7 +41,7 @@ int send_confirmation(int csock, uint8_t word_size){
 }
 
 int terminate(int csock){
-    char flag[1];
+    uint8_t flag[1];
     flag[0] = GAMEOVER_TYPE;
     if(1 != send(csock, flag, 1, 0)){
         return -1;
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
         logexit("error reading word");
     }*/
     uint8_t word_size = (uint8_t)strlen(word);
-    printf("size of word:%d bytes\n", word_size);
+    printf("size of word: %d bytes\n", word_size);
 
     int proto = 6;
     /*descomente para ler o protocolo do teclado
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
         }
         uint8_t letters_guessed = 0;
         while (1) {
-            char guess[2];
+            uint8_t guess[2];
             memset(guess, 0, 2);
             if (!recv(csock, guess, 2, 0)) {
                 // connection terminated
